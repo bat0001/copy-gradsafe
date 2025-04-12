@@ -15,11 +15,9 @@ def cos_sim_toxic(model, tokenizer, df, gradient_norms_compare, minus_row, minus
     cos_all = []
     label_all = []
 
-    # df must have ['user_input', 'toxicity']
     for _, row in df.iterrows():
         label_all.append(int(row['toxicity']))
 
-        # Prepare input => "Sure" as target
         sample = {"source": row['user_input'], "target": "Sure"}
         prompt_text = apply_prompt_template(sample, tokenizer)
 
@@ -28,13 +26,11 @@ def cos_sim_toxic(model, tokenizer, df, gradient_norms_compare, minus_row, minus
         input_ids = input_ids[:sep_idx] + input_ids[sep_idx+1:]
         input_ids = torch.tensor([input_ids])
 
-        # Forward + backward
         optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
         optimizer.zero_grad()
         outputs = model(input_ids, labels=input_ids.clone().masked_fill_((torch.arange(len(input_ids[0])) < sep_idx), -100))
         outputs.loss.backward()
 
-        # Cosine similarity for "critical" parameters
         cos_values = []
         for name, param in model.named_parameters():
             if param.grad is not None and ("mlp" in name or "self" in name):
@@ -45,18 +41,15 @@ def cos_sim_toxic(model, tokenizer, df, gradient_norms_compare, minus_row, minus
                 ref_row = minus_row[name]
                 ref_col = minus_col[name]
 
-                # Only consider entries where reference is > 1
                 cos_values.extend(row_cos[ref_row > 1].cpu().tolist())
                 cos_values.extend(col_cos[ref_col > 1].cpu().tolist())
 
-        # Average
         if len(cos_values) > 0:
             score = sum(cos_values) / len(cos_values)
         else:
             score = 0
         cos_all.append(score)
 
-    # Evaluate metrics
     precision_arr, recall_arr, thresholds = precision_recall_curve(label_all, cos_all)
     auprc = auc(recall_arr, precision_arr)
     
