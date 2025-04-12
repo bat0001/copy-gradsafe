@@ -15,9 +15,7 @@ def cos_sim_xstest(model, tokenizer, df, gradient_norms_compare, minus_row, minu
     cos_all = []
     label_all = []
 
-    # df must have ['prompt', 'type']
     for _, row in df.iterrows():
-        # label: 1 if 'contrast' in type
         label_all.append(1 if "contrast" in row['type'] else 0)
 
         sample = {"source": row['prompt'], "target": "Sure"}
@@ -28,7 +26,6 @@ def cos_sim_xstest(model, tokenizer, df, gradient_norms_compare, minus_row, minu
         input_ids = input_ids[:sep_idx] + input_ids[sep_idx+1:]
         input_ids = torch.tensor([input_ids])
 
-        # Forward + backward
         optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
         optimizer.zero_grad()
         outputs = model(input_ids, labels=input_ids.clone().masked_fill_((torch.arange(len(input_ids[0])) < sep_idx), -100))
@@ -53,7 +50,6 @@ def cos_sim_xstest(model, tokenizer, df, gradient_norms_compare, minus_row, minu
             score = 0
         cos_all.append(score)
 
-    # Evaluate metrics
     precision_arr, recall_arr, _ = precision_recall_curve(label_all, cos_all)
     auprc = auc(recall_arr, precision_arr)
 
