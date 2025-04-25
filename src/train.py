@@ -1,4 +1,7 @@
 import argparse
+import torch
+import torch.nn as nn
+
 from models.llama_model import load_model
 from trainers.critical_parameters import find_critical_para
 from trainers.evaluate_toxic import cos_sim_toxic
@@ -8,7 +11,7 @@ from datasets.xstest_dataset import load_xstest_dataset
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_id", default="./model/Llama-2-7b-chat-hf", help="Path or name of the model.")
+    parser.add_argument("--model_id", default="./model/Llama-3.2-3B-Instruct", help="Path or name of the model.")
     parser.add_argument("--toxic_csv", default="./data/toxic-chat/toxic-chat_annotation_test.csv")
     parser.add_argument("--xstest_csv", default="./data/xstest/xstest_v2_prompts.csv")
     args = parser.parse_args()
