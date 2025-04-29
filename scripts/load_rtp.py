@@ -1,4 +1,6 @@
-import os, sys, pandas as pd
+import os
+import sys
+import pandas as pd
 from datasets import load_dataset
 
 OUT_DIR = "data/realtoxicity"
@@ -7,7 +9,9 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 print("→ Téléchargement allenai/real-toxicity-prompts …")
 ds = load_dataset("allenai/real-toxicity-prompts", split="train")
-df = ds.to_pandas()
+
+ds_small = ds.shuffle(seed=42).select(range(5000))
+df = ds_small.to_pandas()
 
 def get_text(obj):
     return obj if isinstance(obj, str) else obj.get("text", "")
@@ -15,7 +19,6 @@ def get_text(obj):
 def get_score(obj):
     if isinstance(obj, dict) and "toxicity" in obj:
         return obj["toxicity"]
-    raise ValueError("champ 'toxicity' manquant dans le dict prompt")
 
 try:
     prompts = df["prompt"].apply(get_text)
