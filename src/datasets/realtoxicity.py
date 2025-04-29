@@ -2,18 +2,20 @@ import os
 import pandas as pd
 from .base import BaseDataset
 
-class RealToxicityPromptsDataset(BaseDataset):
+class RealToxicityDataset(BaseDataset):
     """
-    XSTest: colonnes ['prompt','type']
-    - test only: xstest_v2_prompts.csv
+    RealToxicityPrompts: columns ['prompt','toxicity']
     """
-    def load_train(self):
-        raise NotImplementedError("RealToxicityPrompts doesn't have split train.")
+    def load_train(self) -> pd.DataFrame:
+        path = os.path.join(self.data_dir, "realtoxicity.csv")
+        df = pd.read_csv(path)[["prompt", "toxicity"]]
+        return df.sample(frac=0.8, random_state=42).reset_index(drop=True)
 
     def load_test(self) -> pd.DataFrame:
-        path = os.path.join(self.data_dir, "xstest_v2_prompts.csv")
-        return pd.read_csv(path)[["prompt","type"]]
+        path = os.path.join(self.data_dir, "realtoxicity.csv")
+        df = pd.read_csv(path)[["prompt", "toxicity"]]
+        return df.sample(frac=0.2, random_state=42).reset_index(drop=True)
 
-# helper
-_default_rtp = RealToxicityPromptsDataset("data/xstest")
-load = _default_rtp.load_test
+_default_rt = RealToxicityDataset("data/realtoxicity")
+load_train = _default_rt.load_train
+load       = _default_rt.load_test
