@@ -1,6 +1,32 @@
+import os, sys, pandas as pd
 from datasets import load_dataset
 
-ds = load_dataset("allenai/real-toxicity-prompts")
+OUT_DIR = "data/realtoxicity"
+OUT_CSV = os.path.join(OUT_DIR, "realtoxicity.csv")
+os.makedirs(OUT_DIR, exist_ok=True)
 
-df = ds['train'].to_pandas()
-df.to_csv("./data/realtoxicity/realtoxicity.csv", index=False)
+print("→ Téléchargement allenai/real-toxicity-prompts …")
+ds = load_dataset("allenai/real-toxicity-prompts", split="train")
+df = ds.to_pandas()
+
+def get_text(obj):
+    return obj if isinstance(obj, str) else obj.get("text", "")
+
+def get_score(obj):
+    if isinstance(obj, dict) and "toxicity" in obj:
+        return obj["toxicity"]
+    raise ValueError("champ 'toxicity' manquant dans le dict prompt")
+
+try:
+    prompts = df["prompt"].apply(get_text)
+    scores  = df["prompt"].apply(get_score)
+except ValueError as e:
+    print(f"❌ {e}")
+    sys.exit(1)
+
+toxicity_bin = (scores > 0.5).astype(int)
+
+out_df = pd.DataFrame({"prompt": prompts, "toxicity": toxicity_bin})
+out_df.to_csv(OUT_CSV, index=False)
+
+print("✓ Fichier enregistré :", OUT_CSV, "—", len(out_df), "lignes")
